@@ -7,6 +7,7 @@ using namespace std;
 
 int main()
 {
+    cout << " 123pppp132" << endl;
     const int N = 10;
     int a[N] = {-9, 16, 14, -44, 875, 0, -1, -8, 68, -72};
     int b[N];
@@ -32,7 +33,9 @@ int main()
     for (int i = 0; i < c_count; ++i) {
         cout << c[i] << ' ';
     }
+    cout << endl;
 }
+
 
 
 
