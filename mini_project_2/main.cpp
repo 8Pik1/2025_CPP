@@ -2,14 +2,14 @@
 using namespace std;
 
 int getInt(char const* const prompt = "") {
-    cout << prompt;
+    //cout << prompt;
     int result; 
     cin >> result;
     return result;
 }
 
 double getDouble(char const* const prompt = "") {
-    cout << prompt;
+    //cout << prompt;
     double result;
     cin >> result;
     return result;
@@ -20,8 +20,12 @@ struct Account {
     void add(double const amount){
         balance += amount;
     }
-    void remove(double const amount){
+    bool remove(double const amount){
         balance -= amount;
+        if (balance < 0) {
+            return true;
+        }
+        return false;
     }
 };
 struct Deposit : Account {
@@ -37,15 +41,15 @@ struct LongDeposit : Deposit {
     double rejectAmount = 0;        // сумма отказанных операций 
     int rejectCount = 0;            // кол-во отклоненных операций 
 
-    void remove(double const amount){
+    bool remove(double const amount){
         if (duration > 0) {
             rejectAmount += amount;
             ++rejectCount;
+            return false;
         }
         else {
-            Deposit::remove(amount);    
+            return Deposit::remove(amount);    
         }
-        balance -= amount;
     }
     void update() {
         if (duration == 0) {
@@ -64,7 +68,8 @@ struct System {
     LongDeposit longDeposit;
     int monthsCount;
     int monthsDone = 0;         // кол-во пройденных месяцев
-
+    int depositCount = 0;       // кол-во обработанных счетов
+    bool hasError = false;
 
     void update(){
         deposit1.update();
@@ -79,27 +84,56 @@ struct System {
 
 int main(){ 
     System system;
-    system.card.balance = 1000;
-    system.deposit1.balance = 2000;
-    system.deposit2.balance = 3000;
-    system.longDeposit.balance = 5000;
-    system.deposit1.rate = 6;
-    system.deposit2.rate = 7;
-    system.longDeposit.rate = 8;
-    system.longDeposit.duration = 6;
+    system.card.balance = getDouble("Введите начальный баланс банковской карты (продукт 1): ");
+    system.deposit1.balance = getDouble("Введите начальный накопительный счёт a (продукт 2): ");
+    system.deposit2.balance = getDouble("Введите начальный накопительный счёт b (продукт 3): ");
+    system.longDeposit.balance = getDouble("Введите начальный баланс вклада (продукт 4): ");
+
+    system.deposit1.rate = getDouble("Введите процент годовой ставки накопительного счёта a (продукт 2): ");
+    system.deposit2.rate = getDouble("Введите процент годовой ставки накопительного счёта b (продукт 2): ");
+    system.longDeposit.rate = getDouble("Введите процент годовой ставки накопительного вклад (продукт 4)");
+
+    system.longDeposit.duration = getDouble("Введите положительное целое число — срок вклада (продукт 4) в месяцах");
 
 
     system.monthsCount = getInt("Months count: ");
     for (int i = 0; i < system.monthsCount; ++i) {
+        system.depositCount = 0;
         system.card.add(getDouble("Money to add: "));
-        system.card.remove(getDouble("Money to remove: "));
+        system.hasError = system.card.remove(getDouble("Money to remove: "));
+        if (system.hasError) {
+            break;
+        }
+        ++system.depositCount;
         system.deposit1.add(getDouble("Money to add: "));
-        system.deposit1.remove(getDouble("Money to remove: "));
+        system.hasError = system.deposit1.remove(getDouble("Money to remove: "));
+        if (system.hasError) {
+            break;
+        }
+        ++system.depositCount;
         system.deposit2.add(getDouble("Money to add: "));
-        system.deposit2.remove(getDouble("Money to remove: "));
+        system.hasError = system.deposit2.remove(getDouble("Money to remove: "));
+        if (system.hasError) {
+            break;
+        }
+        ++system.depositCount;
         system.longDeposit.add(getDouble("Money to add: "));
-        system.longDeposit.remove(getDouble("Money to remove: "));
+        system.hasError = system.longDeposit.remove(getDouble("Money to remove: "));
+        if (system.hasError) {
+            break;
+        }
+        ++system.depositCount;
         system.update();
+    }
+    if (system.hasError) {
+        cout << (system.monthsDone + 1) << '\n';
+        cout << (system.depositCount + 1) << '\n';
+        cout << system.monthsDone << '\n';
+        cout << system.card.balance << ' ' << system.deposit1.balance << ' ' << system.deposit2.balance << ' ' << system.longDeposit.balance << '\n';
+        cout << system.longDeposit.rejectCount << '\n';
+        cout << system.longDeposit.rejectAmount << '\n';
+    }
+    else {
         cout << system.monthsDone << '\n';
         cout << system.card.balance << ' ' << system.deposit1.balance << ' ' << system.deposit2.balance << ' ' << system.longDeposit.balance << '\n';
         cout << system.total() <<'\n';   
